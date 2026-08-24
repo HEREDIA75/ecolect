@@ -17,7 +17,8 @@ class Migration(migrations.Migration):
                 0 AS total_coletas,
                 0 AS total_usuarios,
                 0.0 AS total_kg_reciclados,
-                0 AS total_pontos_distribuidos;
+                0 AS total_pontos_distribuidos,
+                0 AS total_resgates_concluidos;
             """,
             reverse_sql="DROP VIEW IF EXISTS vw_dashboard_metricas;",
         )
