@@ -9,17 +9,20 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql="""
-            CREATE OR REPLACE VIEW vw_dashboard_metricas AS
-            SELECT 
-                1 AS id,
-                0 AS total_ecopontos,
-                0 AS total_coletas,
-                0 AS total_usuarios,
-                0.0 AS total_kg_reciclados,
-                0 AS total_pontos_distribuidos,
-                0 AS total_resgates_concluidos;
-            """,
+            sql=[
+                "DROP VIEW IF EXISTS vw_dashboard_metricas;",
+                """
+                CREATE VIEW vw_dashboard_metricas AS
+                SELECT 
+                    1 AS id,
+                    0 AS total_ecopontos,
+                    0 AS total_coletas,
+                    0 AS total_usuarios,
+                    0.0 AS total_kg_reciclados,
+                    0 AS total_pontos_distribuidos,
+                    0 AS total_resgates_concluidos;
+                """,
+            ],
             reverse_sql="DROP VIEW IF EXISTS vw_dashboard_metricas;",
         )
     ]
