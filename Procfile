@@ -1,1 +1,1 @@
-echo "web: gunicorn setup.wsgi --log-file -" > Procfile
+gunicorn setup.wsgi --bind 0.0.0.0:$PORT

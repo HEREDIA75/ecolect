@@ -3,22 +3,31 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # -----------------------------------------------------------------------------
-# 1. DIRETÓRIOS BASE E CARREGAMENTO DE VARIÁVEIS DE AMBIENTE
+# 1. DIRETÓRIOS BASE E AMBIENTE
 # -----------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carrega o arquivo .env
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+load_dotenv(BASE_DIR / ".env")
 
 # -----------------------------------------------------------------------------
-# 2. CONFIGURAÇÕES DE SEGURANÇA E AMBIENTE
+# 2. SEGURANÇA E HOSTS
 # -----------------------------------------------------------------------------
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-fallback-key-change-in-production"
+)
 
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = [
-    host.strip() for host in os.getenv("ALLOWED_HOSTS", "").split(",") if host.strip()
+# Garante suporte a domínios da Railway e ambiente local
+DEFAULT_HOSTS = "localhost,127.0.0.1,.up.railway.app"
+ENV_HOSTS = os.getenv("ALLOWED_HOSTS", DEFAULT_HOSTS)
+ALLOWED_HOSTS = [host.strip() for host in ENV_HOSTS.split(",") if host.strip()]
+
+# Requisitado pelo Django 4+ ao usar HTTPS na Railway
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}" if not host.startswith("https://") else host
+    for host in ALLOWED_HOSTS
+    if host not in ("localhost", "127.0.0.1")
 ]
 
 # -----------------------------------------------------------------------------
@@ -31,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Bibliotecas de Terceiros
+    # Terceiros
     "django_htmx",
     # Apps do Projeto
     "core",
@@ -39,20 +48,20 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve os estáticos na Railway
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Middleware HTMX
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "setup.urls"
 
 # -----------------------------------------------------------------------------
-# 4. TEMPLATES
+# 4. TEMPLATES E WSGI
 # -----------------------------------------------------------------------------
 TEMPLATES = [
     {
@@ -73,22 +82,33 @@ TEMPLATES = [
 WSGI_APPLICATION = "setup.wsgi.application"
 
 # -----------------------------------------------------------------------------
-# 5. BANCO DE DADOS (MYSQL)
+# 5. BANCO DE DADOS (MYSQL / SQLITE FALLBACK)
 # -----------------------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.mysql"),
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "3306"),
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-            "charset": "utf8mb4",
-        },
+DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.mysql")
+
+if os.getenv("DB_NAME"):
+    DATABASES = {
+        "default": {
+            "ENGINE": DB_ENGINE,
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "3306"),
+            "OPTIONS": {
+                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+                "charset": "utf8mb4",
+            },
+        }
     }
-}
+else:
+    # Fallback para SQLite local caso as variáveis do MySQL não estejam definidas
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # -----------------------------------------------------------------------------
 # 6. VALIDAÇÃO DE SENHAS
@@ -103,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # -----------------------------------------------------------------------------
-# 7. INTERNACIONALIZAÇÃO E FUSO HORÁRIO
+# 7. INTERNACIONALIZAÇÃO
 # -----------------------------------------------------------------------------
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
@@ -111,21 +131,28 @@ USE_I18N = True
 USE_TZ = True
 
 # -----------------------------------------------------------------------------
-# 8. ARQUIVOS ESTÁTICOS E MÍDIA (QR CODES E ASSETS)
+# 8. ARQUIVOS ESTÁTICOS E MÍDIA
 # -----------------------------------------------------------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Compressão e cache dos estáticos no ambiente de produção com WhiteNoise
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # -----------------------------------------------------------------------------
-# 9. CHAVE PRIMÁRIA PADRÃO
+# 9. DIVERSOS
 # -----------------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# -----------------------------------------------------------------------------
-# 10. CONFIGURAÇÃO DE E-MAIL (DESENVOLVIMENTO)
-# -----------------------------------------------------------------------------
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
