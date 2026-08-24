@@ -15,7 +15,8 @@ class Migration(migrations.Migration):
                 1 AS id,
                 0 AS total_ecopontos,
                 0 AS total_coletas,
-                0 AS total_usuarios;
+                0 AS total_usuarios,
+                0.0 AS total_kg_reciclados;
             """,
             reverse_sql="DROP VIEW IF EXISTS vw_dashboard_metricas;",
         )
