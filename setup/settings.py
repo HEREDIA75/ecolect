@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 # -----------------------------------------------------------------------------
-# 2. SEGURANÇA E HOSTS
+# 2. SEGURANÇA E HOSTS (CORRIGIDO PARA RAILWAY)
 # -----------------------------------------------------------------------------
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-fallback-key-change-in-production"
@@ -18,17 +18,30 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-# Garante suporte a domínios da Railway e ambiente local
-DEFAULT_HOSTS = "localhost,127.0.0.1,.up.railway.app"
+# Garante a aceitação do domínio exato da Railway, wildcard e localhost
+DEFAULT_HOSTS = (
+    "ecolect-production.up.railway.app, .up.railway.app, localhost, 127.0.0.1, *"
+)
 ENV_HOSTS = os.getenv("ALLOWED_HOSTS", DEFAULT_HOSTS)
+
+# Trata a lista para o ALLOWED_HOSTS
 ALLOWED_HOSTS = [host.strip() for host in ENV_HOSTS.split(",") if host.strip()]
 
-# Requisitado pelo Django 4+ ao usar HTTPS na Railway
-CSRF_TRUSTED_ORIGINS = [
-    f"https://{host}" if not host.startswith("https://") else host
-    for host in ALLOWED_HOSTS
-    if host not in ("localhost", "127.0.0.1")
-]
+# Gera a lista CSRF_TRUSTED_ORIGINS ignorando '*' e prefixando 'https://'
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    if host in ("*", "localhost", "127.0.0.1"):
+        continue
+    # Se o host começa com ponto (.up.railway.app), adiciona com wildcard (*.up.railway.app)
+    clean_host = host.lstrip(".")
+    if host.startswith("."):
+        CSRF_TRUSTED_ORIGINS.append(f"https://*.{clean_host}")
+    else:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{clean_host}")
+
+# Adiciona o domínio explícito caso não tenha sido incluído
+if "https://ecolect-production.up.railway.app" not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append("https://ecolect-production.up.railway.app")
 
 # -----------------------------------------------------------------------------
 # 3. APLICAÇÕES E MIDDLEWARES
@@ -48,7 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve os estáticos na Railway
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve estáticos no ambiente de produção
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -102,7 +115,7 @@ if os.getenv("DB_NAME"):
         }
     }
 else:
-    # Fallback para SQLite local caso as variáveis do MySQL não estejam definidas
+    # Fallback automático para SQLite local se as variáveis do MySQL não forem fornecidas
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -131,13 +144,12 @@ USE_I18N = True
 USE_TZ = True
 
 # -----------------------------------------------------------------------------
-# 8. ARQUIVOS ESTÁTICOS E MÍDIA
+# 8. ARQUIVOS ESTÁTITCOS E MÍDIA
 # -----------------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Compressão e cache dos estáticos no ambiente de produção com WhiteNoise
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
