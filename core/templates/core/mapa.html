@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- FIX PARA O ERRO 403: Envia o cabeçalho Referer correto para os tiles do mapa -->
+    <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <title>Ecopontos - Ecollect</title>
+
+    <!-- CSS do Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .map-card {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            max-width: 280px;
+        }
+
+        .map-card h3 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .map-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .popup-title {
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .popup-info {
+            font-size: 0.85rem;
+            color: #444;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="map-card">
+        <h3>🌱 Ecopontos Ativos</h3>
+        <p>Encontre os pontos de coleta mais próximos no mapa abaixo.</p>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- JS do Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const ecopontos = JSON.parse('{{ ecopontos_json|escapejs }}');
+
+        const defaultLat = -23.67325;
+        const defaultLng = -45.48670;
+
+        const map = L.map('map').setView([defaultLat, defaultLng], 12);
+
+        // Opção alternativa e limpa do CartoDB (livre de bloqueios de Referer)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        }).addTo(map);
+
+        const bounds = [];
+
+        ecopontos.forEach(ponto => {
+            if (ponto.lat && ponto.lng) {
+                const marker = L.marker([ponto.lat, ponto.lng]).addTo(map);
+
+                const popupContent = `
+                    <div class="popup-title">${ponto.nome}</div>
+                    <div class="popup-info">
+                        <strong>Endereço:</strong> ${ponto.endereco || 'Não informado'}<br>
+                        <strong>Bairro:</strong> ${ponto.bairro || '-'}<br>
+                        <strong>Cidade:</strong> ${ponto.cidade || '-'}
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                bounds.push([ponto.lat, ponto.lng]);
+            }
+        });
+
+        if (bounds.length > 0) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    </script>
+</body>
+</html>

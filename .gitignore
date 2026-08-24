@@ -1,0 +1,21 @@
+# Ambiente Virtual
+.venv/
+venv/
+env/
+
+# Arquivos de Configuração Sensíveis
+.env
+
+# Python / Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos de Banco e Logs
+*.sqlite3
+*.log
+
+# Arquivos estáticos e mídia em desenvolvimento
+/media/
+/staticfiles/
+.DS_Store

@@ -1,0 +1,35 @@
+<div id="metricas-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <!-- Card 1: Total Usuários -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <p class="text-xs font-medium text-slate-400">Usuários Cadastrados</p>
+        <p class="text-2xl font-extrabold text-emerald-400 mt-2">
+            {{ metricas.total_usuarios|default:"0" }}
+        </p>
+    </div>
+
+    <!-- Card 2: Kg Reciclados -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <p class="text-xs font-medium text-slate-400">Total Reciclado (kg)</p>
+        <p class="text-2xl font-extrabold text-sky-400 mt-2">
+            {{ metricas.total_kg_reciclados|default:"0.00" }} kg
+        </p>
+    </div>
+
+    <!-- Card 3: Pontos Distribuídos -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <p class="text-xs font-medium text-slate-400">Pontos Gerados</p>
+        <p class="text-2xl font-extrabold text-amber-400 mt-2">
+            {{ metricas.total_pontos_distribuidos|default:"0" }} pts
+        </p>
+    </div>
+
+    <!-- Card 4: Resgates Concluídos -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <p class="text-xs font-medium text-slate-400">Resgates Concluídos</p>
+        <p class="text-2xl font-extrabold text-indigo-400 mt-2">
+            {{ metricas.total_resgates_concluidos|default:"0" }}
+        </p>
+    </div>
+
+</div>
