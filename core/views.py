@@ -4,14 +4,7 @@ from core import models
 from .models import Ecopontos
 
 
-import json
-from django.shortcuts import render
-from core import models
-from .models import Ecopontos
-
-
 def dashboard(request):
-    # Trata cada busca independentemente para evitar Erro 500 em produção
     try:
         metricas = models.VwDashboardMetricas.objects.first()
     except Exception:
@@ -37,29 +30,25 @@ def dashboard(request):
 
 
 def login_view(request):
-    """
-    Renderiza a tela de login.
-    """
     return render(request, "core/login.html")
 
 
 def mapa_ecopontos(request):
-    """
-    Renderiza o mapa serializando as coordenadas dos Ecopontos ativos para JSON.
-    """
-    ecopontos = Ecopontos.objects.filter(ativo=True)
-
-    ecopontos_data = [
-        {
-            "nome": e.nome,
-            "bairro": e.bairro,
-            "cidade": e.cidade,
-            "endereco": e.endereco,
-            "lat": float(e.latitude) if e.latitude else None,
-            "lng": float(e.longitude) if e.longitude else None,
-        }
-        for e in ecopontos
-    ]
+    try:
+        ecopontos = Ecopontos.objects.filter(ativo=True)
+        ecopontos_data = [
+            {
+                "nome": e.nome,
+                "bairro": e.bairro,
+                "cidade": e.cidade,
+                "endereco": e.endereco,
+                "lat": float(e.latitude) if e.latitude else None,
+                "lng": float(e.longitude) if e.longitude else None,
+            }
+            for e in ecopontos
+        ]
+    except Exception:
+        ecopontos_data = []
 
     context = {"ecopontos_json": json.dumps(ecopontos_data)}
     return render(request, "core/mapa.html", context)
