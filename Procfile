@@ -1,0 +1,1 @@
+echo "web: gunicorn setup.wsgi --log-file -" > Procfile
