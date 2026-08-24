@@ -4,18 +4,28 @@ from core import models
 from .models import Ecopontos
 
 
+import json
+from django.shortcuts import render
+from core import models
+from .models import Ecopontos
+
+
 def dashboard(request):
-    """
-    Renderiza o Dashboard principal carregando as métricas da VIEW
-    e as listas de Ecopontos e Materiais.
-    """
+    # Trata cada busca independentemente para evitar Erro 500 em produção
     try:
         metricas = models.VwDashboardMetricas.objects.first()
     except Exception:
         metricas = None
 
-    ecopontos = models.Ecopontos.objects.filter(ativo=True)
-    materiais = models.Materiais.objects.all()
+    try:
+        ecopontos = models.Ecopontos.objects.filter(ativo=True)
+    except Exception:
+        ecopontos = []
+
+    try:
+        materiais = models.Materiais.objects.all()
+    except Exception:
+        materiais = []
 
     context = {
         "metricas": metricas,
