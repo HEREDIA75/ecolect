@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_htmx",
+    # "django_htmx",
     # Apps do Projeto
     "core",
 ]
@@ -68,7 +68,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_htmx.middleware.HtmxMiddleware",
+    # "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "setup.urls"

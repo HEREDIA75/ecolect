@@ -1,14 +1,17 @@
 import json
 from django.shortcuts import render
 from core import models
-from .models import Ecopontos  # Import correto no plural
+from .models import Ecopontos
 
 
 def dashboard(request):
-    # Tenta buscar das views se existirem, caso contrário busca das models principais
+    """
+    Renderiza o Dashboard principal carregando as métricas da VIEW
+    e as listas de Ecopontos e Materiais.
+    """
     try:
         metricas = models.VwDashboardMetricas.objects.first()
-    except AttributeError:
+    except Exception:
         metricas = None
 
     ecopontos = models.Ecopontos.objects.filter(ativo=True)
@@ -20,19 +23,21 @@ def dashboard(request):
         "materiais": materiais,
     }
 
-    if request.htmx:
-        return render(request, "core/partials/metricas_cards.html", context)
-
     return render(request, "core/dashboard.html", context)
 
 
 def login_view(request):
+    """
+    Renderiza a tela de login.
+    """
     return render(request, "core/login.html")
 
 
 def mapa_ecopontos(request):
-    # Buscar os ecopontos ativos
-    ecopontos = Ecopontos.objects.filter(ativo=1)
+    """
+    Renderiza o mapa serializando as coordenadas dos Ecopontos ativos para JSON.
+    """
+    ecopontos = Ecopontos.objects.filter(ativo=True)
 
     ecopontos_data = [
         {
