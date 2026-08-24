@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -94,19 +95,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "setup.wsgi.application"
 
-# -----------------------------------------------------------------------------
-# 5. BANCO DE DADOS (MYSQL / SQLITE FALLBACK)
-# -----------------------------------------------------------------------------
-DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.mysql")
 
-if os.getenv("DB_NAME"):
+# -----------------------------------------------------------------------------
+# 5. BANCO DE DADOS (DATABASE_URL / MYSQL / SQLITE FALLBACK)
+# -----------------------------------------------------------------------------
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Produção (Railway com MySQL provisionado)
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+        )
+    }
+elif os.getenv("DB_NAME"):
+    # Desenvolvimento Local (MySQL via .env)
     DATABASES = {
         "default": {
-            "ENGINE": DB_ENGINE,
+            "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.mysql"),
             "NAME": os.getenv("DB_NAME"),
             "USER": os.getenv("DB_USER"),
             "PASSWORD": os.getenv("DB_PASSWORD"),
-            "HOST": os.getenv("DB_HOST", "localhost"),
+            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
             "PORT": os.getenv("DB_PORT", "3306"),
             "OPTIONS": {
                 "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -115,7 +126,7 @@ if os.getenv("DB_NAME"):
         }
     }
 else:
-    # Fallback automático para SQLite local se as variáveis do MySQL não forem fornecidas
+    # Fallback SQLite
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
